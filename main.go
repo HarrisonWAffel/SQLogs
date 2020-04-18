@@ -2,12 +2,14 @@ package main
 
 import (
 	"fmt"
+	"github.com/fatih/color"
 	"github.com/jroimartin/gocui"
 	"github.com/prometheus/common/log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+
 	"strings"
 )
 
@@ -147,6 +149,7 @@ func initKeybindings(g *gocui.Gui) error {
 
 			scrollView(v, -1)
 
+			//get current rows contents -> demo.go
 			var fileName string
 			var err error
 
@@ -159,7 +162,8 @@ func initKeybindings(g *gocui.Gui) error {
 			re := regexp.MustCompile(`[-]?\d[\d,]*[\.]?[\d{2}]*`)
 			var asciiStringContent = ""
 			if re.MatchString(fileName) {
-				cmd := exec.Command("mysqlbinlog", logDir+"/"+fileName)
+				args := []string{"--base64-output=auto", "--verbose", logDir + "/" + fileName}
+				cmd := exec.Command("mysqlbinlog", args...)
 				asciiByteContent, err := cmd.Output()
 				if err != nil {
 					log.Error(err)
@@ -174,7 +178,31 @@ func initKeybindings(g *gocui.Gui) error {
 				log.Fatal(e)
 			}
 			v.Clear()
-			fmt.Fprintf(v, asciiStringContent)
+
+			//if line has # then color it
+			isSqlStatment := false
+			lines := strings.Split(asciiStringContent, "\n")
+			for _, e := range lines {
+
+				if isSqlStatment {
+					if strings.Contains(e, ";") {
+						isSqlStatment = false
+					}
+					fmt.Fprintf(v, color.GreenString(e)+"\n")
+				} else {
+					if strings.Contains(e, "###") {
+						fmt.Fprintf(v, color.GreenString(e)+"\n")
+					} else if strings.Contains(e, "#") {
+						fmt.Fprintf(v, color.BlueString(e)+"\n")
+					} else if strings.Contains(e, "CREATE") {
+						isSqlStatment = true
+						fmt.Fprintf(v, color.GreenString(e)+"\n")
+					} else {
+						fmt.Fprintf(v, e+"\n")
+					}
+				}
+			}
+
 			return nil
 		}); err != nil {
 		return err
@@ -198,7 +226,8 @@ func initKeybindings(g *gocui.Gui) error {
 			re := regexp.MustCompile(`[-]?\d[\d,]*[\.]?[\d{2}]*`)
 			var asciiStringContent = ""
 			if re.MatchString(fileName) {
-				cmd := exec.Command("mysqlbinlog", logDir+"/"+fileName)
+				args := []string{"--base64-output=auto", "--verbose", logDir + "/" + fileName}
+				cmd := exec.Command("mysqlbinlog", args...)
 				asciiByteContent, err := cmd.Output()
 				if err != nil {
 					log.Error(err)
@@ -213,7 +242,31 @@ func initKeybindings(g *gocui.Gui) error {
 				log.Fatal(e)
 			}
 			v.Clear()
-			fmt.Fprintf(v, asciiStringContent)
+
+			//if line has # then color it
+			isSqlStatment := false
+			lines := strings.Split(asciiStringContent, "\n")
+			for _, e := range lines {
+
+				if isSqlStatment {
+					if strings.Contains(e, ";") {
+						isSqlStatment = false
+					}
+					fmt.Fprintf(v, color.GreenString(e)+"\n")
+				} else {
+					if strings.Contains(e, "###") {
+						fmt.Fprintf(v, color.GreenString(e)+"\n")
+					} else if strings.Contains(e, "#") {
+						fmt.Fprintf(v, color.BlueString(e)+"\n")
+					} else if strings.Contains(e, "CREATE") {
+						isSqlStatment = true
+						fmt.Fprintf(v, color.GreenString(e)+"\n")
+					} else {
+						fmt.Fprintf(v, e+"\n")
+					}
+				}
+			}
+
 			return nil
 		}); err != nil {
 		return err
